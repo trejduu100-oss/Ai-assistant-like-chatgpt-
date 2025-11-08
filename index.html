@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OmniChat – Your All-in-One AI Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'light-bg': '#ffffff',
+              'light-sidebar': '#f0f4f9',
+              'light-main': '#ffffff',
+              'light-text-primary': '#1f2937',
+              'light-text-secondary': '#6b7280',
+              'light-border': '#e5e7eb',
+              'light-user-msg': '#dbeafe',
+              'light-model-msg': '#f3f4f6',
+              'light-hover': '#e5e7eb',
+
+              'dark-bg': '#171717',
+              'dark-sidebar': '#0a0a0a',
+              'dark-main': '#171717',
+              'dark-text-primary': '#f9fafb',
+              'dark-text-secondary': '#9ca3af',
+              'dark-border': '#374151',
+              'dark-user-msg': '#1e293b',
+              'dark-model-msg': '#262626',
+              'dark-hover': '#262626',
+            }
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0",
+    "react-syntax-highlighter/": "https://aistudiocdn.com/react-syntax-highlighter@^16.1.0/",
+    "react-syntax-highlighter": "https://aistudiocdn.com/react-syntax-highlighter@^16.1.0",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0",
+    "remark-gfm": "https://aistudiocdn.com/remark-gfm@^4.0.1"
+  }
+}
+</script>
+</head>
+  <body class="bg-light-bg dark:bg-dark-bg">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
