@@ -1,7 +1,5 @@
 {
   "name": "OmniChat – Your All-in-One AI Assistant",
   "description": "A full-featured AI chat website like ChatGPT where users can chat with multiple top AI models in one interface. Features a multi-model switcher, clean UI, markdown support, file uploads, and speech-to-text.",
-  "requestFramePermissions": [
-    "microphone"
-  ]
+  "requestFramePermissions": []
 }

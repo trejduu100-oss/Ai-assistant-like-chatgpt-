@@ -4,7 +4,7 @@ import { ALL_MODELS, DEFAULT_MODEL_ID } from '../constants';
 import Message from './Message';
 import ModelSelector from './ModelSelector';
 import { streamChatResponse } from '../services/geminiService';
-import { SendIcon, MicIcon, PaperclipIcon, XIcon } from './icons';
+import { SendIcon, PaperclipIcon, XIcon } from './icons'; // Removed MicIcon
 
 interface ChatViewProps {
   chat: Chat | null;
@@ -24,15 +24,8 @@ const fileToBase64 = (file: File): Promise<string> => {
 const ChatView: React.FC<ChatViewProps> = ({ chat, onUpdateChat, theme }) => {
   const [prompt, setPrompt] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const [isListening, setIsListening] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<{ file: File, preview: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const recognitionRef = useRef<any>(null); // SpeechRecognition instance
-
-  // State to track if SpeechRecognition API is available
-  const [isSpeechRecognitionSupported, setIsSpeechRecognitionSupported] = useState(false);
-  // State to track if microphone permission has been explicitly granted
-  const [hasMicrophonePermission, setHasMicrophonePermission] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -40,67 +33,7 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onUpdateChat, theme }) => {
 
   useEffect(scrollToBottom, [chat?.messages, isStreaming]);
 
-  useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (SpeechRecognition) {
-      setIsSpeechRecognitionSupported(true);
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'en-US';
-
-      recognitionRef.current.onstart = () => {
-        setIsListening(true);
-        setHasMicrophonePermission(true); // Confirmed permission
-      };
-
-      recognitionRef.current.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setPrompt(prev => prev + transcript);
-      };
-
-      recognitionRef.current.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
-        setIsListening(false);
-        if (event.error === 'not-allowed' || event.error === 'permission-denied') {
-          setHasMicrophonePermission(false);
-          alert('Microphone access was denied. Please enable it in your browser settings to use voice input.');
-        }
-      };
-
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
-
-      // Proactively check permission status on mount
-      if (navigator.mediaDevices && (navigator.mediaDevices as any).permissions) { // Added null checks here
-        (navigator.mediaDevices as any).permissions.query({ name: 'microphone' as PermissionName })
-          .then((permissionStatus: PermissionStatus) => {
-            if (permissionStatus.state === 'granted') {
-              setHasMicrophonePermission(true);
-            } else if (permissionStatus.state === 'denied') {
-              setHasMicrophonePermission(false);
-            }
-            permissionStatus.onchange = () => {
-              setHasMicrophonePermission(permissionStatus.state === 'granted');
-            };
-          })
-          .catch((error: any) => {
-            console.warn('Unable to query microphone permission:', error);
-            setHasMicrophonePermission(false);
-          });
-      } else {
-        console.warn('Permissions API or MediaDevices API not fully supported in this browser.');
-        // If permissions API is not available, assume permission is needed upon first use.
-        // setHasMicrophonePermission(false) is default, so no explicit action needed.
-      }
-
-    } else {
-      setIsSpeechRecognitionSupported(false);
-      console.warn('Speech Recognition API is not supported in this browser.');
-    }
-  }, []);
+  // Removed useEffect for SpeechRecognition API setup and permission handling
 
   const handleModelChange = (modelId: string) => {
     if (chat) {
@@ -158,42 +91,7 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onUpdateChat, theme }) => {
   }, [prompt, chat, isStreaming, onUpdateChat, uploadedImage]);
 
 
-  const toggleListening = useCallback(async () => {
-    if (isStreaming) return; // Cannot listen while streaming
-
-    if (isListening) {
-      recognitionRef.current?.stop();
-      return;
-    }
-
-    if (!isSpeechRecognitionSupported) {
-      alert('Speech recognition is not supported in your browser.');
-      return;
-    }
-
-    // Request permission if not already granted
-    if (!hasMicrophonePermission) {
-      try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        setHasMicrophonePermission(true);
-      } catch (err: any) {
-        console.error('Failed to get microphone access:', err);
-        setHasMicrophonePermission(false); // Explicitly set to false on denial
-        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          alert('Microphone access was denied. Please enable it in your browser settings to use voice input.');
-        } else {
-          alert('Could not access your microphone. Please check your device settings.');
-        }
-        return; // Stop here if permission failed
-      }
-    }
-
-    // Start recognition only if permission is granted
-    if (hasMicrophonePermission) { // Check again after potential getUserMedia call
-        recognitionRef.current?.start();
-    }
-
-  }, [isListening, isStreaming, isSpeechRecognitionSupported, hasMicrophonePermission]);
+  // Removed toggleListening function
 
 
   if (!chat) {
@@ -207,18 +105,7 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onUpdateChat, theme }) => {
 
   const currentModel = ALL_MODELS.find(m => m.id === chat.modelId) || ALL_MODELS.find(m => m.id === DEFAULT_MODEL_ID)!;
 
-  // Determine if mic button should be disabled and its title
-  const isMicDisabled = isStreaming || !isSpeechRecognitionSupported || (isSpeechRecognitionSupported && !hasMicrophonePermission && !isListening);
-  let micButtonTitle = 'Start voice input';
-  if (isStreaming) {
-      micButtonTitle = 'Cannot use microphone while AI is responding.';
-  } else if (!isSpeechRecognitionSupported) {
-      micButtonTitle = 'Speech recognition is not supported in this browser.';
-  } else if (!hasMicrophonePermission) {
-      micButtonTitle = 'Click to request microphone access.';
-  } else if (isListening) {
-      micButtonTitle = 'Stop listening';
-  }
+  // Removed mic button related variables (isMicDisabled, micButtonTitle)
 
   return (
     <div className="flex-1 flex flex-col bg-light-main dark:bg-dark-main">
@@ -252,7 +139,7 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onUpdateChat, theme }) => {
                 }
               }}
               placeholder="Message OmniChat..."
-              className="w-full p-3 pr-32 border border-light-border dark:border-dark-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-light-bg dark:bg-dark-bg text-light-text-primary dark:text-dark-text-primary"
+              className="w-full p-3 pr-20 border border-light-border dark:border-dark-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-light-bg dark:bg-dark-bg text-light-text-primary dark:text-dark-text-primary"
               rows={1}
               disabled={isStreaming}
             />
@@ -265,15 +152,7 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onUpdateChat, theme }) => {
                   </label>
                 </>
               }
-              <button
-                type="button"
-                onClick={toggleListening}
-                className={`p-2 rounded-full hover:bg-light-hover dark:hover:bg-dark-hover ${isListening ? 'bg-red-500 text-white' : ''} ${isMicDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={isMicDisabled}
-                title={micButtonTitle}
-              >
-                <MicIcon className="w-5 h-5 text-light-text-secondary dark:text-dark-text-secondary" />
-              </button>
+              {/* Removed microphone button */}
               <button type="submit" disabled={!prompt.trim() || isStreaming} className="p-2 rounded-full bg-indigo-500 text-white disabled:bg-indigo-300 disabled:cursor-not-allowed">
                 <SendIcon className="w-5 h-5" />
               </button>
